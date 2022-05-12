@@ -1,0 +1,165 @@
+{
+  "command1": {
+    "type": "text",
+    "label": "Command to flip a coin:",
+    "value": "!coin",
+    "group": "General settings"
+  },
+  "permissionLvl": {
+    "type": "dropdown",
+    "label": "Who can trigger the command:",
+    "options": {
+      "streamer": "Streamer",
+      "mods": "Streamer + Mods",
+      "vips": "Streamer + Mods + Vips",
+      "everyone": "No restrictions"
+    },
+    "value": "mods",
+    "group": "General settings"
+  },
+  "additionalUsers": {
+    "type": "text",
+    "label": "Additional users (comma separated):",
+    "value": "person1,person2",
+    "group": "General settings"
+  },
+  "cooldown": {
+    "type": "number",
+    "label": "Cooldown in sec for command:",
+    "value": 15,
+    "min": 0,
+    "step": 1,
+    "group": "General settings"
+  },
+  "videos_heads": {
+    "type": "video-input",
+    "multiple": true,
+    "label": "Associated with Heads:",
+    "group": "Videos"
+  },
+  "videos_tails": {
+    "type": "video-input",
+    "multiple": true,
+    "label": "Associated with Tails:",
+    "group": "Videos"
+  },
+  "videos_volume": {
+    "type": "slider",
+    "label": "Volume:",
+    "min": 1,
+    "max": 100,
+    "value": 55,
+    "group": "Videos"
+  },
+  "timeIn": {
+    "type": "number",
+    "label": "Animation In time ms:",
+    "value": 0,
+    "min": 0,
+    "step": 1,
+    "group": "Video Animation settings"
+  },
+  "timeOut": {
+    "type": "number",
+    "label": "Animation Out time ms:",
+    "value": 0,
+    "min": 0,
+    "step": 1,
+    "group": "Video Animation settings"
+  },
+  "animationIn": {
+    "type": "dropdown",
+    "label": "Animation In:",
+    "options": {
+      "none": "None",
+      "bounceIn": "bounceIn",
+      "bounceInDown": "bounceInDown",
+      "bounceInLeft": "bounceInLeft",
+      "bounceInRight": "bounceInRight",
+      "bounceInUp": "bounceInUp",
+      "fadeIn": "fadeIn",
+      "fadeInDown": "fadeInDown",
+      "fadeInDownBig": "fadeInDownBig",
+      "fadeInLeft": "fadeInLeft",
+      "fadeInLeftBig": "fadeInLeftBig",
+      "fadeInRight": "fadeInRight",
+      "fadeInRightBig": "fadeInRightBig",
+      "fadeInUp": "fadeInUp",
+      "fadeInUpBig": "fadeInUpBig",
+      "flipInX": "flipInX",
+      "flipInY": "flipInY",
+      "lightSpeedIn": "lightSpeedIn",
+      "rotateIn": "rotateIn",
+      "rotateInDownLeft": "rotateInDownLeft",
+      "rotateInDownRight": "rotateInDownRight",
+      "rotateInUpLeft": "rotateInUpLeft",
+      "rotateInUpRight": "rotateInUpRight",
+      "slideInUp": "slideInUp",
+      "slideInDown": "slideInDown",
+      "slideInLeft": "slideInLeft",
+      "slideInRight": "slideInRight",
+      "zoomIn": "zoomIn",
+      "zoomInDown": "zoomInDown",
+      "zoomInLeft": "zoomInLeft",
+      "zoomInRight": "zoomInRight",
+      "zoomInUp": "zoomInUp",
+      "jackInTheBox": "jackInTheBox",
+      "rollIn": "rollIn"
+    },
+    "value": "none",
+    "group": "Video Animation settings"
+  },
+  "animationOut": {
+    "type": "dropdown",
+    "label": "Animation Out:",
+    "options": {
+      "none": "None",
+      "bounceOut": "bounceOut",
+      "bounceOutDown": "bounceOutDown",
+      "bounceOutLeft": "bounceOutLeft",
+      "bounceOutRight": "bounceOutRight",
+      "bounceOutUp": "bounceOutUp",
+      "fadeOut": "fadeOut",
+      "fadeOutDown": "fadeOutDown",
+      "fadeOutDownBig": "fadeOutDownBig",
+      "fadeOutLeft": "fadeOutLeft",
+      "fadeOutLeftBig": "fadeOutLeftBig",
+      "fadeOutRight": "fadeOutRight",
+      "fadeOutRightBig": "fadeOutRightBig",
+      "fadeOutUp": "fadeOutUp",
+      "fadeOutUpBig": "fadeOutUpBig",
+      "flipOutX": "flipOutX",
+      "flipOutY": "flipOutY",
+      "lightSpeedOut": "lightSpeedOut",
+      "rotateOut": "rotateOut",
+      "rotateOutDownLeft": "rotateOutDownLeft",
+      "rotateOutDownRight": "rotateOutDownRight",
+      "rotateOutUpLeft": "rotateOutUpLeft",
+      "rotateOutUpRight": "rotateOutUpRight",
+      "slideOutUp": "slideOutUp",
+      "slideOutDown": "slideOutDown",
+      "slideOutLeft": "slideOutLeft",
+      "slideOutRight": "slideOutRight",
+      "zoomOut": "zoomOut",
+      "zoomOutDown": "zoomOutDown",
+      "zoomOutLeft": "zoomOutLeft",
+      "zoomOutRight": "zoomOutRight",
+      "zoomOutUp": "zoomOutUp",
+      "rollOut": "rollOut"
+    },
+    "value": "none",
+    "group": "Video Animation settings"
+  },
+  "widgetName":{
+    "type": "hidden",
+    "value": "Coin Toss"
+  },
+  "widgetAuthor":{
+    "type": "hidden",
+    "value": "avoeh"
+  },
+  "widgetVersion":{
+    "type": "hidden",
+    "value": 1
+  }
+}

@@ -1,0 +1,25 @@
+.main-container {
+  width:100%;
+  height:100%;
+}
+
+/* Styling of error message */
+h1 {
+  width: 80%;
+  height: 90%;
+  margin: 5%;
+  
+  /* Center vertically */
+  display: grid;
+  place-items: center;
+  
+  font-family: arial, sans-serif;
+  font-size: max(12px, 7vw);
+  font-weight: bold;
+  text-align: center;
+  color: #000000;
+  
+  /* Outline text */
+  -webkit-text-stroke-width: 1px;
+  -webkit-text-stroke-color: blueviolet;
+}

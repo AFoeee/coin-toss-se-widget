@@ -1,144 +1,239 @@
-// This widget is based on the 'Video on Command' widget from Benno. Thank you!
-
-// It was reworked in such a way that it uses two video pools from which a video is randomly picked.
-// This approach was choosen to make a binary outcome look more dynamic.
-
-// To guarantee a random distribution between those two video pools, the pools themselves are picked first.
-// (So the number of videos in each pool don't affect the probability.)
-
-// To work properly at least 1 video per outcome is required. (Otherwise an error message is shown.)
+/**
+ * This widget visualizes the outcome of a random distribution (e.g. coin toss). 
+ * To achieve this, it uses multiple video pools (one per possible outcome) from 
+ * which a random video is picked.
+ * 
+ * Special thanks to Benno and Reboot0.
+ */
 
 
-let userOptions = {};
-let animationIn = 'none';
-let animationOut = 'none';
-let timeIn = 0;
-let timeOut = 0;
-let allowed = true;
+/* Prefixes defined in 'Fields' are only taken into account if they are also
+ * specified in this list. */
+const outcomePrefixes = [
+  "outcome1", 
+  "outcome2"
+];
 
-let cooldown = 15;
-let lastSuccessEpoch = 0;				// Logs the timestamp of the last successful execution.
+let allowed = false;                // Blocks the widget when busy.
+const videoPools = [];              // Holds the diffent video pools.
 
-let videoURLs_heads;
-let videoURLs_tails;
+let commandStr;
+let cooldownMillis;
+let cooldownEndEpoch = 0;
+
+let isUsableByEveryone;             // If true, everyone can trigger the widget.
+let isUsableByMods;
+let otherUsers;                     // Those users can trigger the widget, too.
 
 
-window.addEventListener('onWidgetLoad', function (obj) {
-    userOptions = obj['detail']['fieldData'];
-    
-    userOptions['channelName'] = obj['detail']['channel']['username'];
-    userOptions['additionalUsers'] = (userOptions['additionalUsers'].toLowerCase()).replace(/\s/g, '').split(",");
-    
-    timeIn = userOptions['timeIn'];
-    timeOut = userOptions['timeOut'];
-    animationIn = userOptions['animationIn'];
-    animationOut = userOptions['animationOut'];
+/* Triggers CSS animations by adding animate.css classes. Their effect is 
+ * sustained as long as they're attached to the element. Therefore, they are 
+ * only removed to immediately replace them with other animate.css classes. */
+function animateCss(node, animationName, duration = 1, prefix = 'animate__') {
+  // animate.css classes do have a prefix (since version 4.0).
+  const envCls = `${prefix}animated`;
+  const animationCls = `${prefix}${animationName}`;
   
-    cooldown = userOptions['cooldown'];
-    
-    videoURLs_heads = userOptions['videos_heads'];
-    videoURLs_tails = userOptions['videos_tails'];
-    
-    // If there is not a single video for a particular outcome, show an error message instead.
-    if (!videoURLs_heads || videoURLs_heads.length == 0 || 
-        !videoURLs_tails || videoURLs_tails.length == 0) {
-        
-        $('#video').replaceWith("<h1>In order to function properly, at least one video " + 
-                                " must be assigned to each possible outcome.</h1>");
-        allowed = false;
-        return;
-    };
-    
-    $("#video").hide();
-    allowed = true;
-});
-
-
-window.addEventListener('onEventReceived', function (obj) {
-    // Ignore any event that isn't a chat message.
-    if (obj.detail.listener !== 'message') return;
-    
-    let data = obj.detail.event.data;
-    let message = data['text'].toLowerCase();
-    let command1 = userOptions['command1'].toLowerCase();
-    
-    if (message !== command1) return;
+  // Remove all applied animate.css classes.
+  node.className = node.className
+      .split(" ")
+      .filter((cls) => !cls.startsWith(prefix))
+      .join(" ");
   
-    console.log("Got it! '" + message + "'");
+  // Promise resolves when animation has ended.
+  return new Promise((resolve, reject) => {
+    node.addEventListener('animationend', (event) => {
+      event.stopPropagation();
+      resolve('Animation ended');
+    }, {once: true});
     
-    // Blocks any request while ...
-    // - a video is playing or
-    // - an outcome has no associated videos or
-    // - the command is still on cool down.
-    if (!allowed || isOnCoolDown()) return;
+    node.style.setProperty('--animate-duration', `${duration}s`);
+    node.classList.add(envCls, animationCls);       // Starts CSS animation.
+  });
+}
+
+
+// Returns a random element of the array.
+function randomItemFromArray(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+
+// Uses the input of a media field to test whether media was added to it.
+function isMediaFieldPopulated(input) {
+  return (input && (Array.isArray(input) ? (input.length > 0) : true));
+}
+
+
+/* Sets a (global) cooldown. To avoid unnecessary calculations, it is represented 
+ * by an epoch time that marks the moment, when the cooldown has ended. Later code
+ * then simply compares this to the current epoch time. */
+function activateCooldown() {
+  cooldownEndEpoch = Date.now() + cooldownMillis;
+}
+
+
+function isOnCooldown() {
+  return (Date.now() < cooldownEndEpoch);
+}
+
+
+/* Abstract base class, which defines ...
+ * ... general media attributes.
+ * ... how the command is triggered.
+ * ... how the cooldown mechanism works.
+ * ... which url is used (if multiple are provided). */
+ 
+/* Represents the video pool for a possible outcome. */
+class VideoPool {
+  static videoElmt = document.getElementById("video");
+  
+  #url;
+  normalizedVolume;
+  
+  static {
+    // Hide video element immediately (therefore, 0s duration).
+    const hideVideoElmt = 
+        () => animateCss(VideoPool.videoElmt, "{{animationOut}}", 0);
     
-    let user = data['nick'].toLowerCase();
+    // Ensures a defined initial state.
+    hideVideoElmt();
     
-    // Preparing userState object containing all user flags
-    let userState = {
-        'mod': parseInt(data.tags.mod),
-        'sub': parseInt(data.tags.subscriber),
-        'vip': (data.tags.badges.indexOf("vip") !== -1),
-        'broadcaster': (user === userOptions['channelName'])
+    // When a video playback starts, trigger the in-animation.
+    VideoPool.videoElmt.onplay = 
+        () => animateCss(VideoPool.videoElmt, "{{animationIn}}", {{timeIn}});
+    
+    // When an error occurs, unblock the widget.
+    VideoPool.videoElmt.onerror = () => {
+      hideVideoElmt();      // Otherwise the next in-animation would be skipped.
+      allowed = true;
+      
+      throw VideoPool.videoElmt.error;
     };
     
-    // Check if user has the correct permission level to trigger the command.
-    if ((userOptions['permissionLvl'] === 'everyone') || 
-        (userState.mod && userOptions['permissionLvl'] === 'mods') || 
-        ((userState.vip || userState.mod) && (userOptions['permissionLvl'] == 'vips')) || 
-        userState.broadcaster || 
-        (userOptions['additionalUsers'].indexOf(user) !== -1)) {
-        
-        let video = $("#video");
-        let source = $("#source");
-        allowed = false;
-        video[0].pause();
-        
-        // Flip a coin and pick a random videoURL that is associated with the result.
-        let randomVideoURL = randomItemFromArray((Math.random() < 0.5) ? videoURLs_heads : videoURLs_tails);
-        
-        video[0].load();
-        source.attr('src', randomVideoURL);
-        video[0].volume = userOptions['videos_volume'] / 100;
-        play();
-        
-        lastSuccessEpoch = Date.now();			// Sets the cool down.
+    // When a video ends, trigger the out-animation.
+    VideoPool.videoElmt.onended = async () => {
+      try {
+        await animateCss(VideoPool.videoElmt, "{{animationOut}}", {{timeOut}});
+      } finally {
+        /* Unblock the widget only after the out-animation has finished. Otherwise
+         * there would be a chance that it's interrupted. */
+        allowed = true;
+      }
     };
+  }
+  
+  constructor(url, volumePct) {
+    this.#url = url;
+    this.normalizedVolume = volumePct / 100;
+  }
+  
+  /* If an array of media is provided, a random element is picked. (That's the 
+   * case when the field's "multiple" parameter is true.) */
+  get url() {
+    if (Array.isArray(this.#url)) {
+      return randomItemFromArray(this.#url);
+    }
+    return this.#url;
+  }
+  
+  set url(newUrl) {
+    this.#url = newUrl;
+  }
+  
+  async play() {
+    VideoPool.videoElmt.pause();
     
-    // The command isn't executed as long as this returns true.
-	function isOnCoolDown() {
-        if (cooldown == 0) return false;
-        
-        let elapsedMillis = Date.now() - lastSuccessEpoch;
-        let coolDownMillis = cooldown * 1000;
-        
-        if (elapsedMillis > coolDownMillis) {
-            return false;
-        } else {
-            console.log("Command1 executed " + elapsedMillis + " ms ago and is therefore still on cool down. (Total: " + coolDownMillis + " ms.)");
-            return true;
-        };
+    // Gets a random video and sets the specified volume for the respective pool.
+    VideoPool.videoElmt.src = this.url;
+    VideoPool.videoElmt.volume = this.normalizedVolume;
+    
+    // 'load() will reset the element and rescan the available sources ...'
+    VideoPool.videoElmt.load();
+    
+    allowed = false;
+    
+    VideoPool.videoElmt.play();
+    
+    activateCooldown();
+  }
+}
+
+
+function onWidgetLoad(obj) {
+  const fieldData = obj.detail.fieldData;
+  
+  // Case-insensitivity is achieved by converting all strings to lowercase.
+  commandStr = fieldData.command.toLowerCase();
+  
+  // If no trigger phrase was specified, the widget should remain blocked.
+  if (commandStr !== "") {
+    console.log(`Associated command: ${commandStr}`);
+  } else {
+    console.log("Deactivate widget: empty command");
+    return;
+  }
+  
+  isUsableByEveryone = (fieldData.permissionLvl === "everyone");
+  isUsableByMods = (fieldData.permissionLvl === "mods");
+  
+  otherUsers = fieldData.otherUsers
+      .toLowerCase()
+      .replace(/\s/g, '')
+      .split(",");
+  
+  cooldownMillis = fieldData.cooldown * 1000;
+  
+  // Initialize VideoPools.
+  for (const prefix of outcomePrefixes) {
+    //console.log(`Initialize prefix '${prefix}'`);
+    
+    let url = fieldData[`${prefix}_url`];
+    
+    if (!isMediaFieldPopulated(url)) {
+      console.log(
+          "Deactivate widget: at least one outcome has no associated videos.");
+      return;
     }
     
-    // Returns a random element of the array.
-    function randomItemFromArray(arr) {
-    	return arr[Math.floor(Math.random() * arr.length)];
+    videoPools.push(
+        new VideoPool(url, fieldData[`${prefix}_volume`]));
+  }
+  
+  // Unblock the widget when successfully initialized.
+  allowed = true;
+}
+
+
+function onMessage(msg) {
+  if (!allowed) {
+    //console.log("Widget is currently blocked.");
+    return;
+  }
+  
+  if (isOnCooldown()) {
+    //console.log("Cooldown is still running.");
+    return;
+  }
+  
+  // Check if the user has enough permissions for the selected mode.
+  if (isUsableByEveryone || 
+      (isUsableByMods && msg.isModerator()) || 
+      msg.isBroadcaster() || 
+      msg.usernameOnList(otherUsers)) {
+    
+    if (commandStr !== msg.text.toLowerCase()) {
+      return;
     }
     
-    function play() {
-        let video = $("#video");
-        
-        video.addClass(animationIn + ' animated', timeIn)
-            .show(0, timeIn)
-            .removeClass(animationIn)
-            .get(0).play();
-        
-        video.on('ended', function () {
-            video.addClass(animationOut, timeOut)
-                .removeClass(animationOut + " animated", timeOut)
-                .hide(0, timeOut);
-            
-            allowed = true;
-        });
-    }
-});
+    //console.log(`'${commandStr}' has been detected.`);
+    
+    /* Picks a random video pool. The pool object itself plays then a random video. 
+     * This should guarantee that the number of videos in each pool doesn't affect 
+     * the probability. */
+    randomItemFromArray(videoPools).play();
+    
+  } /*else {
+    console.log(`'${msg.username}' has insufficient permissions.`);
+  }*/
+}

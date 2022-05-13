@@ -77,14 +77,8 @@ function isOnCooldown() {
   return (Date.now() < cooldownEndEpoch);
 }
 
-
-/* Abstract base class, which defines ...
- * ... general media attributes.
- * ... how the command is triggered.
- * ... how the cooldown mechanism works.
- * ... which url is used (if multiple are provided). */
  
-/* Represents the video pool for a possible outcome. */
+// Represents the video pool for a possible outcome.
 class VideoPool {
   static videoElmt = document.getElementById("video");
   
@@ -144,8 +138,7 @@ class VideoPool {
   async play() {
     VideoPool.videoElmt.pause();
     
-    // Gets a random video and sets the specified volume for the respective pool.
-    VideoPool.videoElmt.src = this.url;
+    VideoPool.videoElmt.src = this.url;        // Getter returns a random video.
     VideoPool.videoElmt.volume = this.normalizedVolume;
     
     // 'load() will reset the element and rescan the available sources ...'

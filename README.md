@@ -26,6 +26,10 @@ Here are the steps needed:
 #### JSON
 By default, there are two outcome segments, which you can use as a template.
 
+An outcome segment consists of
+- a *video-input field* ending with the suffix `_url`.
+- a *number selection field* ending with the suffix `_volume`.
+
 ```
   ...
   

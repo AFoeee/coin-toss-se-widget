@@ -1,5 +1,5 @@
-# CoinToss
-This widget visualizes the outcome of a random distribution (e.g. a coin toss).
+# Coin Toss
+This StreamElements custom widget visualizes the outcome of a random distribution (e.g. a coin toss).
 
 Special thanks to Benno and Reboot0.
 

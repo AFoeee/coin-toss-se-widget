@@ -7,7 +7,7 @@ Special thanks to Benno and Reboot0.
 The widget comes with multiple video pools (one per possible outcome).  
 When the associated command has been detected in chat, a random pool is picked and from that a random video is played.
 
-The number of videos in a pool do not affect the probability.
+The number of videos in a pool does not affect the probability.
 
 See also this [demonstration video](https://streamable.com/cqz1h0).
 

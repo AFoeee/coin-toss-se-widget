@@ -156,6 +156,9 @@ class VideoPool {
 function onWidgetLoad(obj) {
   const fieldData = obj.detail.fieldData;
   
+  // Makes it easier for the user to look up the widget version.
+  console.log(`Initialize ${fieldData.widgetName} (v${fieldData.widgetVersion}).`);
+  
   // Case-insensitivity is achieved by converting all strings to lowercase.
   commandStr = fieldData.command.toLowerCase();
   

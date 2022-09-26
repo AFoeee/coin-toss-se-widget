@@ -98,3 +98,8 @@ const outcomePrefixes = [
 
 ...
 ```
+
+
+## Used libraries:  
+ - [Reboot0's Widget Tools](https://reboot0-de.github.io/se-tools/index.html)  
+ - [animate.css](https://github.com/animate-css/animate.css)  
